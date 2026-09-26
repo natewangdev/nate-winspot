@@ -1,0 +1,83 @@
+# Release WinSpot on merges to main (constitution Principle VIII).
+# - SemVer tags: vX.Y.Z
+# - Version from Conventional Commits since last stable tag
+# - Skip when no feat / fix / breaking
+# - Attach single-file WinSpot.exe; product version matches tag
+# - Main path publishes stable releases only (no -beta tags)
+
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: release-main
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Version, publish, and release
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Compute next SemVer
+        id: semver
+        shell: pwsh
+        run: |
+          .\.github\scripts\Get-NextSemVer.ps1
+
+      - name: Setup .NET
+        if: steps.semver.outputs.skip != 'true'
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Publish single-file WinSpot.exe
+        if: steps.semver.outputs.skip != 'true'
+        shell: pwsh
+        env:
+          PRODUCT_VERSION: ${{ steps.semver.outputs.version }}
+        run: |
+          $version = $env:PRODUCT_VERSION
+          if ([string]::IsNullOrWhiteSpace($version)) {
+            throw 'PRODUCT_VERSION is empty'
+          }
+          New-Item -ItemType Directory -Force -Path publish | Out-Null
+          dotnet publish src\WinSpot\WinSpot.csproj `
+            -c Release `
+            -r win-x64 `
+            --self-contained true `
+            -p:PublishSingleFile=true `
+            -p:IncludeNativeLibrariesForSelfExtract=true `
+            -p:EnableCompressionInSingleFile=true `
+            -p:Version=$version `
+            -p:AssemblyVersion=$version `
+            -p:FileVersion=$version `
+            -p:InformationalVersion=$version `
+            -o publish
+          if (-not (Test-Path publish\WinSpot.exe)) {
+            throw 'publish\WinSpot.exe was not produced'
+          }
+          Get-Item publish\WinSpot.exe | Format-List Name, Length, LastWriteTime
+
+      - name: Create GitHub Release
+        if: steps.semver.outputs.skip != 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.semver.outputs.tag }}
+          name: ${{ steps.semver.outputs.tag }}
+          generate_release_notes: true
+          draft: false
+          prerelease: false
+          files: publish/WinSpot.exe
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
