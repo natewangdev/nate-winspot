@@ -30,9 +30,9 @@ Run `publish\WinSpot.exe`.
 3. **Pick**: Select **拾取** tab → WinSpot UI still clickable under the pointer → click bound client outside WinSpot → verify `x,y` and `#RRGGBB` in that tab; tab stays on **拾取**; Esc → **无**.
 4. **Marquee**: Select **框选** tab → drag on bound client outside WinSpot → rubber-band → verify `x1,y1,x2,y2`; tab stays on **框选** until Esc.
 5. **Idle tab**: Select **无** (or Esc from pick/marquee) → probe inactive.
-6. **Capture**: Default JPEG + time-only filename; press F12 → open image; content must match on-screen client (not gray); size = client size.
+6. **Capture**: Default JPEG + time-only filename; press PrtSc → open image; content must match on-screen client (not gray); size = client size.
 7. **Settings persist**: Change JPEG quality → restart → confirm value retained.
-8. **Failure path**: Close bound window → F12 → clear error, no bogus success file.
+8. **Failure path**: Close bound window → PrtSc → clear error, no bogus success file.
 
 ## Spec Kit continue
 

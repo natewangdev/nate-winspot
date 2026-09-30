@@ -11,7 +11,7 @@ Windows 桌面工具：窗口绑定、客户区坐标/取色、框选区域、�
 - 拖拽准星绑定窗口，查看句柄、标题、类名、进程、客户区大小
 - 拾取客户区相对坐标与像素颜色（可复制）
 - 框选客户区区域（可复制 `x1,y1,x2,y2`），拖拽时显示橡皮筋
-- F12 客户区截图（DXGI Desktop Duplication，与 dxcam 同技术路径）
+- PrtSc 客户区截图（DXGI Desktop Duplication，与 dxcam 同技术路径）
 - 发布为自包含单文件 `win-x64` exe
 
 ## 技术栈
@@ -55,7 +55,7 @@ dotnet publish src\WinSpot\WinSpot.csproj -c Release -r win-x64 --self-contained
 | `jpegQuality` | 1–100 | `90` |
 | `filenameTemplate` | 可用 `{yyyyMMdd_HHmmss}`、`{yyyyMMdd}`、`{HHmmss}`（可选 `{title}`） | `{yyyyMMdd_HHmmss}` |
 
-热键：**F12**（全局，v1 固定）。冲突时在状态栏提示。
+热键：**PrtSc**（Print Screen，全局，v1 固定）。冲突时在状态栏提示。若注册失败，可在「设置 → 辅助功能 → 键盘」关闭「使用 Print Screen 键打开屏幕截图」后重试。
 
 ## 版本与发布
 
