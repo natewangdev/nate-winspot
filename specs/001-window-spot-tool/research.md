@@ -20,11 +20,11 @@
 - **Rationale**: Aligns pick color with capture pipeline; better consistency under composition.
 - **Alternatives considered**: Desktop DC GetPixel only (fails more often with DPI/DWM).
 
-## Decision 4: Marquee overlay
+## Decision 4: Marquee / pick overlay (amended 2026-09-30)
 
-- **Decision**: While in marquee mode, use a full-screen (or target-covering) transparent overlay window that captures mouse drag, maps to client coords, clips to client rect, draws rubber-band.
-- **Rationale**: Reliable mouse capture without injecting into the target.
-- **Alternatives considered**: Subclassing target window (invasive — rejected by constitution).
+- **Decision**: Use a transparent overlay for pick/marquee outside WinSpot, but **hit-test through** (or exclude) the WinSpot main window region so the tool keeps normal cursor and clicks. Outside WinSpot show a mode crosshair/cross cursor. Completing a sample does **not** close the mode / switch to None; Esc or selecting None ends the mode. Overlay may stay armed for repeat picks/marquees.
+- **Rationale**: FR-017 — tool must remain usable while probe mode is selected; continuous sampling without re-selecting the tab.
+- **Alternatives considered**: Full-screen exclusive overlay that blocks WinSpot (rejected); auto-return to None after each sample (rejected).
 
 ## Decision 5: Hotkey
 
@@ -50,3 +50,27 @@
 - **Decision**: `dotnet publish -c Release -r win-x64 --self-contained true /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true`
 - **Rationale**: Meets FR-011 / SC-006.
 - **Alternatives considered**: Framework-dependent single-file (fails clean-machine requirement).
+
+## Decision 9: Probe mode UI — tabs (2026-09-30)
+
+- **Decision**: Replace radio buttons with a `TabControl` of three tabs: **None / Pick / Marquee**. Each tab hosts only that mode’s results and hints; selecting a tab activates the mode.
+- **Rationale**: Clarification session; larger hit targets than radios; matches FR-013.
+- **Alternatives considered**: Shared results panel under radios; two tabs without None (rejected — keep idle default).
+
+## Decision 10: Copy feedback (2026-09-30)
+
+- **Decision**: On successful clipboard copy, briefly restyle/relabel the clicked button (~1.5s success state) and show a top-of-window overlay toast with text `已复制` (~2s auto-dismiss). Non-blocking.
+- **Rationale**: Clarification session; FR-014 / SC-007.
+- **Alternatives considered**: Toast-only; persistent button label until next copy; manual toast dismiss.
+
+## Decision 11: Application icon (2026-09-30)
+
+- **Decision**: Ship `Assets/app.ico` as an abstract **“W”** letter mark; set `ApplicationIcon` in the csproj so exe, window, and taskbar share it.
+- **Rationale**: Clarification chose letter mark over crosshair/eyedropper metaphors; FR-015 / SC-008.
+- **Alternatives considered**: Crosshair+window; eyedropper; marquee rectangle.
+
+## Decision 12: Remove in-content title banner (2026-09-30)
+
+- **Decision**: Remove the dark content-area header showing “WinSpot” + feature intro. Keep WPF `Window.Title = "WinSpot"`.
+- **Rationale**: Clarification session; FR-016 / SC-009.
+- **Alternatives considered**: Blank OS title; keep large in-content title only.

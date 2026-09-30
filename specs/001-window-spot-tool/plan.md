@@ -1,12 +1,14 @@
 # Implementation Plan: WinSpot Window Spot Tool
 
-**Branch**: `001-window-spot-tool` | **Date**: 2026-09-27 | **Spec**: [spec.md](./spec.md)
+**Branch**: `001-window-spot-tool` | **Date**: 2026-09-27 (updated 2026-09-30) | **Spec**: [spec.md](./spec.md)
 
 **Input**: Feature specification from `/specs/001-window-spot-tool/spec.md`
 
 ## Summary
 
 Build **WinSpot**, a Windows desktop assistant that binds a target window via drag, displays identity/geometry, picks client-relative coordinates and pixel color, marquees client regions, and captures the client area via F11 with persistent export settings. Implementation uses **C# / WPF on .NET 8**, Win32 interop for geometry/pixel/capture, and **single-file self-contained `win-x64` publish**.
+
+**UX polish (2026-09-30 clarifications)**: No in-content title/intro banner (OS title stays `WinSpot`); probe modes as None/Pick/Marquee tabs with per-tab results; copy actions show brief button success + top `已复制` toast; app icon is an abstract “W” letter mark on exe/window/taskbar. **Probe interaction (FR-017)**: while Pick/Marquee is selected, WinSpot under the pointer stays normal (cursor + clicks); outside WinSpot use mode crosshair and sample; completing a sample keeps the tab; Esc or selecting None exits.
 
 ## Technical Context
 
@@ -37,11 +39,12 @@ Build **WinSpot**, a Windows desktop assistant that binds a target window via dr
 | Spec-Driven Delivery | PASS | spec → plan → tasks before full feature code |
 | Non-Invasive Introspection | PASS | Public Win32 only; no injection |
 | Accuracy Over Cleverness | PASS | ScreenToClient / DXGI Desktop Duplication (dxcam-like); explicit errors |
-| User-Copyable Insights | PASS | Clipboard helpers for all key fields |
-| Simplicity & Single-Binary | PASS | One WPF project; PublishSingleFile self-contained |
+| User-Copyable Insights | PASS | Clipboard helpers for all key fields; copy UX includes button success + top toast (FR-014) |
+| Simplicity & Single-Binary | PASS | One WPF project; PublishSingleFile self-contained; static app.ico asset |
 | Tech Constraints (C# WPF .NET 8, win-x64) | PASS | Declared in Technical Context |
+| Bilingual Spec Companion | PASS | spec.md + spec.zh-CN.md kept in sync for clarifications |
 
-Post-design re-check: PASS — structure stays one app + services; no unjustified complexity.
+Post-design re-check (2026-09-30): PASS — UX polish stays in MainWindow + Assets; no new service complexity.
 
 ## Project Structure
 
@@ -68,6 +71,8 @@ src/
     ├── WinSpot.csproj
     ├── App.xaml
     ├── App.xaml.cs
+    ├── Assets/
+    │   └── app.ico          # abstract “W” letter mark (FR-015)
     ├── MainWindow.xaml
     ├── MainWindow.xaml.cs
     ├── Models/
@@ -91,6 +96,8 @@ src/
     └── Helpers/
         ├── ClipboardHelper.cs
         └── FilenameTemplate.cs
+
+tools/MakeAppIcon/   # optional helper to regenerate Assets/app.ico
 
 publish/   # output of `dotnet publish` (gitignored)
 ```

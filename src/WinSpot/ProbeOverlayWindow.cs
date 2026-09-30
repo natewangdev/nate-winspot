@@ -1,8 +1,10 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Shapes;
+using WinSpot.Native;
 
 namespace WinSpot;
 
@@ -10,23 +12,29 @@ public partial class ProbeOverlayWindow : Window
 {
     public event Action<Point>? PointPicked;
     public event Action<Point, Point>? RegionSelected;
+    public event Action? Cancelled;
 
     private readonly bool _marquee;
+    private readonly Window _ownerTool;
     private readonly Canvas _canvas;
     private readonly Rectangle _rubberBand;
     private bool _dragging;
     private Point _startScreen;
     private Point _startLocal;
+    private bool _cancelRaised;
 
-    public ProbeOverlayWindow(bool marquee)
+    public ProbeOverlayWindow(bool marquee, Window ownerTool)
     {
         _marquee = marquee;
+        _ownerTool = ownerTool;
         WindowStyle = WindowStyle.None;
         AllowsTransparency = true;
         Background = new SolidColorBrush(Color.FromArgb(1, 0, 0, 0));
         Topmost = true;
         ShowInTaskbar = false;
-        Cursor = marquee ? Cursors.Cross : Cursors.Pen;
+        Focusable = true;
+        // FR-017: mode crosshair outside WinSpot (owner is punched out of the hit region).
+        Cursor = Cursors.Cross;
 
         Left = SystemParameters.VirtualScreenLeft;
         Top = SystemParameters.VirtualScreenTop;
@@ -49,13 +57,114 @@ public partial class ProbeOverlayWindow : Window
         MouseLeftButtonDown += OnDown;
         MouseMove += OnMove;
         MouseLeftButtonUp += OnUp;
-        KeyDown += (_, e) =>
+        KeyDown += OnKeyDown;
+        SourceInitialized += (_, _) => UpdateOwnerExclusionRegion();
+        _ownerTool.LocationChanged += OwnerGeometryChanged;
+        _ownerTool.SizeChanged += OwnerGeometryChanged;
+        _ownerTool.StateChanged += OwnerGeometryChanged;
+        Closed += (_, _) =>
         {
-            if (e.Key == Key.Escape)
-            {
-                Close();
-            }
+            _ownerTool.LocationChanged -= OwnerGeometryChanged;
+            _ownerTool.SizeChanged -= OwnerGeometryChanged;
+            _ownerTool.StateChanged -= OwnerGeometryChanged;
         };
+    }
+
+    private void OwnerGeometryChanged(object? sender, EventArgs e) => UpdateOwnerExclusionRegion();
+
+    public void UpdateOwnerExclusionRegion()
+    {
+        var helper = new WindowInteropHelper(this);
+        if (helper.Handle == nint.Zero)
+        {
+            return;
+        }
+
+        var ownerHelper = new WindowInteropHelper(_ownerTool);
+        if (ownerHelper.Handle == nint.Zero)
+        {
+            return;
+        }
+
+        // Full virtual-screen region in overlay client coords, minus owner tool frame.
+        var full = NativeMethods.CreateRectRgn(0, 0, (int)Width, (int)Height);
+        if (full == nint.Zero)
+        {
+            return;
+        }
+
+        try
+        {
+            if (!NativeMethods.GetWindowRect(helper.Handle, out var overlayRect))
+            {
+                NativeMethods.DeleteObject(full);
+                full = nint.Zero;
+                return;
+            }
+
+            // Rebuild full region in physical pixels matching the HWND.
+            NativeMethods.DeleteObject(full);
+            full = NativeMethods.CreateRectRgn(0, 0, overlayRect.Width, overlayRect.Height);
+            if (full == nint.Zero)
+            {
+                return;
+            }
+
+            if (_ownerTool.WindowState == WindowState.Minimized ||
+                !NativeMethods.GetWindowRect(ownerHelper.Handle, out var ownerRect))
+            {
+                NativeMethods.SetWindowRgn(helper.Handle, full, true);
+                full = nint.Zero;
+                return;
+            }
+
+            var left = ownerRect.Left - overlayRect.Left;
+            var top = ownerRect.Top - overlayRect.Top;
+            var right = ownerRect.Right - overlayRect.Left;
+            var bottom = ownerRect.Bottom - overlayRect.Top;
+            var hole = NativeMethods.CreateRectRgn(left, top, right, bottom);
+            if (hole == nint.Zero)
+            {
+                NativeMethods.DeleteObject(full);
+                full = nint.Zero;
+                return;
+            }
+
+            NativeMethods.CombineRgn(full, full, hole, NativeMethods.RGN_DIFF);
+            NativeMethods.DeleteObject(hole);
+            NativeMethods.SetWindowRgn(helper.Handle, full, true);
+            full = nint.Zero;
+        }
+        finally
+        {
+            if (full != nint.Zero)
+            {
+                NativeMethods.DeleteObject(full);
+            }
+        }
+    }
+
+    private void OnKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.Escape)
+        {
+            return;
+        }
+
+        RaiseCancelledAndClose();
+    }
+
+    public void RaiseCancelledAndClose()
+    {
+        if (_cancelRaised)
+        {
+            Close();
+            return;
+        }
+
+        _cancelRaised = true;
+        Cancelled?.Invoke();
+        Close();
     }
 
     private void OnDown(object sender, MouseButtonEventArgs e)
@@ -64,10 +173,13 @@ public partial class ProbeOverlayWindow : Window
         _startScreen = PointToScreen(_startLocal);
         if (!_marquee)
         {
-            // Hide before sampling so screen GetPixel / DXGI sees the target, not this overlay.
+            // Hide briefly so GetPixel sees the target, not this overlay; keep mode armed.
             Hide();
             PointPicked?.Invoke(_startScreen);
-            Close();
+            Show();
+            Activate();
+            Focus();
+            UpdateOwnerExclusionRegion();
             return;
         }
 
@@ -100,7 +212,10 @@ public partial class ProbeOverlayWindow : Window
         Hide();
         var end = PointToScreen(e.GetPosition(this));
         RegionSelected?.Invoke(_startScreen, end);
-        Close();
+        Show();
+        Activate();
+        Focus();
+        UpdateOwnerExclusionRegion();
     }
 
     private void UpdateRubberBand(Point a, Point b)

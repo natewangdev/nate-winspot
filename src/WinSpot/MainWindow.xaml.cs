@@ -1,6 +1,8 @@
 ﻿using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Interop;
+using System.Windows.Threading;
 using Microsoft.Win32;
 using WinSpot.Helpers;
 using WinSpot.Models;
@@ -13,6 +15,8 @@ public partial class MainWindow : Window
 {
     private const int HotkeyId = 0x11;
     private const uint VkF11 = 0x7A;
+    private static readonly TimeSpan CopyButtonSuccessDuration = TimeSpan.FromMilliseconds(1500);
+    private static readonly TimeSpan CopyToastDuration = TimeSpan.FromSeconds(2);
 
     private readonly IWindowBindService _bindService = new WindowBindService();
     private readonly IClientProbeService _probeService = new ClientProbeService();
@@ -25,7 +29,10 @@ public partial class MainWindow : Window
     private bool _bindingDrag;
     private HwndSource? _hwndSource;
     private bool _suppressSettingsEvent;
+    private bool _suppressModeChange;
     private ProbeOverlayWindow? _overlay;
+    private DispatcherTimer? _copyToastTimer;
+    private readonly Dictionary<Button, DispatcherTimer> _copyButtonTimers = new();
 
     public MainWindow()
     {
@@ -174,42 +181,57 @@ public partial class MainWindow : Window
         ClientOriginText.Text = info is null ? "" : $"{info.ClientScreenOriginX},{info.ClientScreenOriginY}";
     }
 
-    private void Mode_Changed(object sender, RoutedEventArgs e)
+    private void ProbeModeTabs_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (!IsLoaded)
+        if (!IsLoaded || _suppressModeChange)
+        {
+            return;
+        }
+
+        // TabControl raises SelectionChanged for nested selectors too.
+        if (!ReferenceEquals(e.Source, ProbeModeTabs))
         {
             return;
         }
 
         CloseOverlay();
 
-        if (_bound is null || !_bound.IsValid)
+        if (ProbeModeTabs.SelectedItem == TabNone)
         {
-            if (ModePick.IsChecked == true || ModeMarquee.IsChecked == true)
-            {
-                ModeNone.IsChecked = true;
-                SetStatus("请先绑定窗口。");
-            }
-
+            SetStatus("探测已关闭。");
             return;
         }
 
-        if (ModePick.IsChecked == true)
+        if (_bound is null || !_bound.IsValid)
+        {
+            SelectNoneTabQuietly();
+            SetStatus("请先绑定窗口。");
+            return;
+        }
+
+        if (ProbeModeTabs.SelectedItem == TabPick)
         {
             OpenOverlay(marquee: false);
-            SetStatus("拾取模式：点击绑定窗口客户区（Esc 取消）。");
+            SetStatus("拾取模式：在 WinSpot 外点击绑定窗口客户区；Esc 或「无」结束。");
         }
-        else if (ModeMarquee.IsChecked == true)
+        else if (ProbeModeTabs.SelectedItem == TabMarquee)
         {
             OpenOverlay(marquee: true);
-            SetStatus("框选模式：在客户区内拖拽（Esc 取消）。");
+            SetStatus("框选模式：在 WinSpot 外拖拽客户区；Esc 或「无」结束。");
         }
+    }
+
+    private void SelectNoneTabQuietly()
+    {
+        _suppressModeChange = true;
+        ProbeModeTabs.SelectedItem = TabNone;
+        _suppressModeChange = false;
     }
 
     private void OpenOverlay(bool marquee)
     {
         CloseOverlay();
-        _overlay = new ProbeOverlayWindow(marquee);
+        _overlay = new ProbeOverlayWindow(marquee, this);
         if (marquee)
         {
             _overlay.RegionSelected += OnRegionSelected;
@@ -219,20 +241,21 @@ public partial class MainWindow : Window
             _overlay.PointPicked += OnPointPicked;
         }
 
-        _overlay.Closed += (_, _) =>
-        {
-            _overlay = null;
-            ModeNone.IsChecked = true;
-        };
+        _overlay.Cancelled += () => SelectNoneTabQuietly();
+        _overlay.Closed += (_, _) => _overlay = null;
         _overlay.Show();
+        _overlay.Activate();
+        _overlay.Focus();
+        _overlay.UpdateOwnerExclusionRegion();
     }
 
     private void CloseOverlay()
     {
         if (_overlay is not null)
         {
-            _overlay.Close();
+            var closing = _overlay;
             _overlay = null;
+            closing.Close();
         }
     }
 
@@ -383,29 +406,80 @@ public partial class MainWindow : Window
     private void SetStatus(string text) => StatusText.Text = text;
 
     private void CopyHandle_Click(object sender, RoutedEventArgs e) =>
-        ClipboardHelper.SetText(_bound?.HandleText ?? "");
+        CopyText(sender, _bound?.HandleText ?? "");
 
     private void CopyTitle_Click(object sender, RoutedEventArgs e) =>
-        ClipboardHelper.SetText(TitleText.Text);
+        CopyText(sender, TitleText.Text);
 
     private void CopyClass_Click(object sender, RoutedEventArgs e) =>
-        ClipboardHelper.SetText(ClassText.Text);
+        CopyText(sender, ClassText.Text);
 
     private void CopyProcess_Click(object sender, RoutedEventArgs e) =>
-        ClipboardHelper.SetText(ProcessText.Text);
+        CopyText(sender, ProcessText.Text);
 
     private void CopyClientSize_Click(object sender, RoutedEventArgs e) =>
-        ClipboardHelper.SetText(ClientSizeText.Text);
+        CopyText(sender, ClientSizeText.Text);
 
     private void CopyClientOrigin_Click(object sender, RoutedEventArgs e) =>
-        ClipboardHelper.SetText(ClientOriginText.Text);
+        CopyText(sender, ClientOriginText.Text);
 
     private void CopyPickCoord_Click(object sender, RoutedEventArgs e) =>
-        ClipboardHelper.SetText(PickCoordText.Text);
+        CopyText(sender, PickCoordText.Text);
 
     private void CopyPickColor_Click(object sender, RoutedEventArgs e) =>
-        ClipboardHelper.SetText(PickColorText.Text);
+        CopyText(sender, PickColorText.Text);
 
     private void CopyRegion_Click(object sender, RoutedEventArgs e) =>
-        ClipboardHelper.SetText(RegionText.Text);
+        CopyText(sender, RegionText.Text);
+
+    private void CopyText(object sender, string text)
+    {
+        if (string.IsNullOrEmpty(text))
+        {
+            SetStatus("没有可复制的内容。");
+            return;
+        }
+
+        ClipboardHelper.SetText(text);
+        if (sender is Button button)
+        {
+            FlashCopyButton(button);
+        }
+
+        ShowCopyToast();
+    }
+
+    private void FlashCopyButton(Button button)
+    {
+        if (_copyButtonTimers.TryGetValue(button, out var existing))
+        {
+            existing.Stop();
+            _copyButtonTimers.Remove(button);
+        }
+
+        var original = button.Content;
+        button.Content = "已复制";
+        var timer = new DispatcherTimer { Interval = CopyButtonSuccessDuration };
+        timer.Tick += (_, _) =>
+        {
+            timer.Stop();
+            button.Content = original;
+            _copyButtonTimers.Remove(button);
+        };
+        _copyButtonTimers[button] = timer;
+        timer.Start();
+    }
+
+    private void ShowCopyToast()
+    {
+        CopyToast.Visibility = Visibility.Visible;
+        _copyToastTimer?.Stop();
+        _copyToastTimer = new DispatcherTimer { Interval = CopyToastDuration };
+        _copyToastTimer.Tick += (_, _) =>
+        {
+            _copyToastTimer.Stop();
+            CopyToast.Visibility = Visibility.Collapsed;
+        };
+        _copyToastTimer.Start();
+    }
 }

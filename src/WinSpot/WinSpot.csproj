@@ -10,6 +10,7 @@
     <RootNamespace>WinSpot</RootNamespace>
     <AssemblyName>WinSpot</AssemblyName>
     <Version>0.1.0</Version>
+    <ApplicationIcon>Assets\app.ico</ApplicationIcon>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(PublishSingleFile)' == 'true'">
