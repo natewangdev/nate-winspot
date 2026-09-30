@@ -8,7 +8,7 @@
 
 **Status**: Draft
 
-**Input**: User description: "Windows window tool: drag-bind selected window and show HWND/title/client size; click client area to show relative coordinates and color (copyable); marquee-select a client region with copyable relative coords; F11 client-area screenshot with configurable save path/format/quality; deliver as C# WPF single-file exe."
+**Input**: User description: "Windows window tool: drag-bind selected window and show HWND/title/client size; click client area to show relative coordinates and color (copyable); marquee-select a client region with copyable relative coords; F12 client-area screenshot with configurable save path/format/quality; deliver as C# WPF single-file exe."
 
 ## Clarifications
 
@@ -21,6 +21,7 @@
 - Q: While Pick/Marquee is selected, how should pointer interaction and mode exit work? → A: Inside the WinSpot window, cursor and clicks stay normal; pick/marquee only apply outside WinSpot. Completing a pick/marquee MUST NOT switch the tab to None; Esc ends probe mode and selects None (selecting the None tab also idles).
 - Q: Besides Esc, can the user exit probe mode by selecting the None tab? → A: Yes — Esc or selecting the None tab both end probe mode and return to None.
 - Q: What cursor should appear outside WinSpot while Pick or Marquee is selected? → A: Outside WinSpot use a mode cursor (crosshair/cross for pick and marquee); restore the normal cursor over WinSpot.
+- Q: When changing the capture hotkey to F12, does this version still use a fixed default with no in-app remapping UI? → A: Fixed default F12 only; remapping remains deferred (conflict messaging still required).
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -78,17 +79,17 @@ With a bound window, the user selects the Marquee tab. WinSpot UI under the poin
 
 ### User Story 4 - Hotkey Client Screenshot & Export Settings (Priority: P4)
 
-With a bound window, the user presses F11 (or the configured capture hotkey) to capture only the client area and save it using configured directory, filename pattern, format, and quality. Settings persist across sessions.
+With a bound window, the user presses F12 to capture only the client area and save it using configured directory, filename pattern, format, and quality. Settings persist across sessions. In-app hotkey remapping is out of scope for this version.
 
 **Why this priority**: Capture is high value but depends on reliable binding; settings are part of making captures usable day-to-day.
 
-**Independent Test**: Bind a window, set save folder/format/quality, press F11, open the file and confirm client-only content and expected dimensions/format.
+**Independent Test**: Bind a window, set save folder/format/quality, press F12, open the file and confirm client-only content and expected dimensions/format.
 
 **Acceptance Scenarios**:
 
-1. **Given** a visible bound window and valid save settings, **When** the user presses F11, **Then** a client-area image is saved to the configured location with the configured format, and the image content matches what is visibly composed on screen (not a blank/gray frame).
+1. **Given** a visible bound window and valid save settings, **When** the user presses F12, **Then** a client-area image is saved to the configured location with the configured format, and the image content matches what is visibly composed on screen (not a blank/gray frame).
 2. **Given** JPEG format is selected (the default), **When** the user changes quality and captures, **Then** the saved file reflects the new quality setting.
-3. **Given** the bound window is minimized, closed, or capture is otherwise impossible, **When** the user presses F11, **Then** WinSpot shows a clear failure message and does not write a corrupt/empty image as success.
+3. **Given** the bound window is minimized, closed, or capture is otherwise impossible, **When** the user presses F12, **Then** WinSpot shows a clear failure message and does not write a corrupt/empty image as success.
 4. **Given** the user changes save directory/format/quality, **When** the app restarts, **Then** those settings are still applied.
 
 ---
@@ -113,7 +114,7 @@ A user downloads/builds one executable and runs WinSpot on a clean Windows 10/11
 - Target window moves, resizes, or changes title while bound.
 - Target runs at higher integrity level than WinSpot (access/capture may fail).
 - High-DPI and multi-monitor layouts affect screen↔client conversion.
-- Global hotkey F11 is already registered by another application.
+- Global hotkey F12 is already registered by another application.
 - Minimized, cloaked, or fully occluded windows.
 - UWP / exclusive fullscreen / hardware-protected content may not yield accurate pixels (best-effort with clear failure).
 
@@ -128,7 +129,7 @@ A user downloads/builds one executable and runs WinSpot on a clean Windows 10/11
 - **FR-005**: System MUST report the color of the picked client pixel in a copyable RGB and/or HEX form.
 - **FR-006**: System MUST provide a marquee mode to select a rectangular region inside the bound client area, show a visible rubber-band outline while dragging, and report the region as copyable `x1,y1,x2,y2` (top-left and bottom-right, client-relative).
 - **FR-007**: System MUST clip marquee results to the client-area bounds.
-- **FR-008**: System MUST register a capture hotkey defaulting to F11 that captures only the bound window’s client area.
+- **FR-008**: System MUST register a fixed capture hotkey of F12 that captures only the bound window’s client area. In-app remapping of this hotkey is out of scope for this version.
 - **FR-009**: System MUST allow configuring screenshot save directory, image format (at least PNG and JPEG), JPEG quality, and a filename pattern; settings MUST persist locally. Defaults MUST be: JPEG format; filename template time-only (e.g. `{yyyyMMdd_HHmmss}`), without window title.
 - **FR-010**: System MUST present clear errors when bind, pick, marquee, or capture cannot complete accurately.
 - **FR-011**: System MUST ship as a single-file self-contained Windows executable for the supported architecture.
@@ -144,7 +145,7 @@ A user downloads/builds one executable and runs WinSpot on a clean Windows 10/11
 - **BoundWindow**: The currently selected target; identity (handle, title, class/process as available) and client geometry.
 - **ClientPointSample**: A relative `(x,y)` plus color sample from the bound client area.
 - **ClientRegion**: A relative rectangle (origin + size) within the bound client area.
-- **CaptureSettings**: Save directory, format, quality, filename pattern, hotkey.
+- **CaptureSettings**: Save directory, format, quality, filename pattern (capture hotkey is fixed to F12 and not part of persisted settings in this version).
 - **CaptureResult**: Success path or failure reason for a client-area screenshot attempt.
 
 ## Success Criteria *(mandatory)*
@@ -154,7 +155,7 @@ A user downloads/builds one executable and runs WinSpot on a clean Windows 10/11
 - **SC-001**: A new user can bind a window and read handle/title/client size within 30 seconds of first launch.
 - **SC-002**: For standard Win32 windows (e.g. Notepad), relative pick coordinates match a trusted reference with zero pixel error; sampled color matches within ±1 per RGB channel under normal desktop composition.
 - **SC-003**: Marquee regions reported for an on-screen known rectangle match expected relative bounds after clipping.
-- **SC-004**: F11 capture produces a file whose pixel dimensions equal the bound client size (for a visible, capturable window) in under 2 seconds on a typical developer PC.
+- **SC-004**: F12 capture produces a file whose pixel dimensions equal the bound client size (for a visible, capturable window) in under 2 seconds on a typical developer PC.
 - **SC-005**: After changing save settings and restarting, the next capture uses the saved settings without reconfiguration.
 - **SC-006**: Published single-file build launches on a clean Windows 10/11 x64 environment without a separate runtime installer.
 - **SC-007**: After a successful copy, users can perceive both button success feedback and a top “已复制” toast within the stated durations without blocking further interaction.
@@ -168,7 +169,7 @@ A user downloads/builds one executable and runs WinSpot on a clean Windows 10/11
 - First release binds one window at a time (no multi-bind).
 - Pick and marquee are mutually exclusive modes selected via tabs (None / Pick / Marquee); each tab shows only that mode’s results and hints.
 - While Pick/Marquee is active, WinSpot remains fully interactive under the pointer with a normal cursor; outside WinSpot a mode crosshair/cross cursor is used and probe input applies. Completing a sample does not return to None; Esc or selecting None does.
-- Default capture hotkey is F11; remapping may be deferred if not required for MVP beyond documenting conflict handling.
+- Capture hotkey is fixed to F12 for this version; in-app remapping remains deferred. Registration conflicts MUST still surface a clear non-fatal message.
 - Default image format is JPEG; default filename template is `{yyyyMMdd_HHmmss}` (no `{title}`).
 - Capture backend is DXGI Desktop Duplication (dxcam-equivalent); client area is obtained by capturing the composed desktop region of the client screen rect.
 - OCR, process injection, scripted clicking, and guaranteed exclusive-fullscreen/protected capture are out of scope for this feature.

@@ -1,0 +1,35 @@
+---
+description: Spec Kit Git — never commit on main; create feature branch first
+alwaysApply: true
+---
+
+# Spec Kit Git Branching
+
+## Command split (do not conflate)
+
+| Command | Responsibility |
+|---------|----------------|
+| `/speckit-git-feature` | Create and switch to a feature branch (`NNN-short-name`) |
+| `/speckit-git-commit` | Stage and commit on the **current** branch only — it never creates branches |
+
+Branch creation is also the mandatory `before_specify` hook (`speckit.git.feature`). Clarify / plan / implement hooks only auto-commit when enabled in `.specify/extensions/git/git-config.yml`.
+
+## When running `/speckit-git-commit` (or any Spec Kit commit)
+
+1. If the current branch is `main` or `master` (or otherwise not a Spec Kit feature branch matching `^\d{3}-` or timestamp form):
+   - **Do not commit on that branch.**
+   - First create/switch to a feature branch via `/speckit-git-feature` (or `create-new-feature-branch.ps1` with `-Json -ShortName`), then commit there.
+2. Prefer Conventional Commit messages that match recent repo history when committing manually because `auto_commit` is disabled.
+3. Never push to `main`/`master` unless the user explicitly asks.
+
+## Recovery if a commit landed on main by mistake
+
+If the commit was **not** pushed to origin:
+
+```powershell
+git branch NNN-short-name   # tip stays on the commit
+git reset --hard origin/main
+git checkout NNN-short-name
+```
+
+If already pushed, do not rewrite shared history unless the user explicitly requests it.

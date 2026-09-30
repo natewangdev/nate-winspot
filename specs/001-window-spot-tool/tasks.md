@@ -97,16 +97,16 @@
 
 ## Phase 6: User Story 4 - Hotkey Capture & Settings (Priority: P4)
 
-**Goal**: F11 client screenshot with persistent save/format/quality settings
+**Goal**: F12 client screenshot with persistent save/format/quality settings
 
-**Independent Test**: Configure path/format; F11; verify file; restart persists settings; failure paths
+**Independent Test**: Configure path/format; F12; verify file; restart persists settings; failure paths
 
 ### Implementation for User Story 4
 
 - [x] T024 [P] [US4] Implement `ICaptureService` / `CaptureService` via DXGI Desktop Duplication (dxcam-equivalent)
-- [x] T025 [P] [US4] Implement `IHotkeyService` / `HotkeyService` with F11 + conflict error UI
+- [x] T025 [P] [US4] Implement `IHotkeyService` / `HotkeyService` with F12 + conflict error UI
 - [x] T026 [US4] Settings panel for directory/format/JPEG quality/filename template (defaults: Jpeg, `{yyyyMMdd_HHmmss}`)
-- [x] T027 [US4] Connect F11 → capture → status/path feedback; no success on empty/corrupt file
+- [x] T027 [US4] Connect F12 → capture → status/path feedback; no success on empty/corrupt file
 - [x] T028 [US4] Validate minimized/closed window failure messaging
 
 **Checkpoint**: Capture workflow complete
@@ -223,3 +223,14 @@ Task: Implement ClipboardHelper and FilenameTemplate
 ### Incremental Delivery
 
 Setup → Foundation → Bind → Pick → Marquee → Capture/Settings → Publish → Polish
+
+---
+
+## Phase 11: Convergence
+
+**Purpose**: Close gaps after capture hotkey clarification (F11 → fixed F12)
+
+- [x] T043 Switch capture hotkey registration from F11 (`VK_F11`/`0x7A`) to fixed F12 (`VK_F12`/`0x7B`) and update conflict/status strings in `src/WinSpot/MainWindow.xaml.cs` per FR-008 / US4 (contradicts)
+- [x] T044 Update capture settings group header and any F11 UI labels to F12 in `src/WinSpot/MainWindow.xaml` per FR-008 / US4 (contradicts)
+- [x] T045 Align Technology Constraints hotkey default F11 → F12 in `.specify/memory/constitution.md` per FR-008 / Constitution Technology Constraints (partial)
+- [x] T046 Sync F11 → F12 in `README.md` and `README.zh-CN.md` per FR-008 / Constitution VII (partial)
