@@ -1,11 +1,10 @@
 <!--
 Sync Impact Report
-- Version change: 1.1.0 → 1.2.0 (MINOR: new product versioning / release principle)
-- Modified principles: none renamed
-- Added principle: VIII. Product SemVer & Automated Releases
-- Added Technology Constraints / Workflow notes for CI release alignment
-- Removed sections: none
-- Follow-up TODOs: implement GitHub Actions release workflow when ready
+- Version change: 1.2.0 → 1.3.0 (MINOR: Principle VIII switches to tag-driven releases)
+- Modified principles: VIII. Product SemVer & Automated Releases
+- Added: none
+- Removed: auto-release / SemVer bump on merge to main
+- Follow-up TODOs: none
 -->
 # WinSpot Constitution
 
@@ -77,22 +76,20 @@ constitution’s own version line.
 
 Mandatory rules:
 
-1. Git tags MUST use the form `vX.Y.Z` (for example `v0.1.0`, `v1.2.3`).
-2. After merges to `main`, CI MUST compute the next product version from
-   [Conventional Commits](https://www.conventionalcommits.org/) since the
-   previous product tag (`feat` → MINOR, `fix` → PATCH, breaking/`!` /
-   `BREAKING CHANGE` → MAJOR).
-3. If the commits since the last product tag contain no `feat`, `fix`, or
-   breaking change, CI MUST NOT create a tag or GitHub Release.
-4. A GitHub Release MUST attach the published single-file `WinSpot.exe`, and the
-   assembly/file version embedded in that binary MUST match the tag version
-   (tag `v1.2.3` ↔ product version `1.2.3`).
-5. Pre-releases MAY use `vX.Y.Z-beta.N`. Merges to `main` MUST produce only
-   stable releases by default (no beta tags on the default `main` release path
-   unless an explicit pre-release workflow is used).
+1. Git tags MUST use the form `vX.Y.Z` (for example `v0.1.0`, `v1.2.3`). Optional
+   pre-release suffixes MAY use `vX.Y.Z-beta.N` (or equivalent SemVer pre-release).
+2. Releases MUST be **tag-driven**: pushing a `v*` tag is the sole trigger for
+   CI to publish. Merges to `main` MUST NOT create tags or GitHub Releases.
+3. The git tag is the source of truth for the product version. CI MUST strip the
+   leading `v` and inject that version into the published `WinSpot.exe` metadata
+   (tag `v1.2.3` ↔ product version `1.2.3`; informational version MAY retain a
+   pre-release suffix when present on the tag).
+4. A GitHub Release MUST be created for the pushed tag and MUST attach the
+   published single-file `WinSpot.exe`.
+5. Do not reuse a tag / version that already exists as a GitHub Release.
 
-Rationale: predictable releases, meaningful version history, and downloadable
-artifacts that match what CI tagged.
+Rationale: explicit, intentional releases (same model as nate-game-engine);
+predictable artifacts that match what was tagged.
 
 ## Technology Constraints
 
@@ -120,8 +117,10 @@ artifacts that match what CI tagged.
 - After creating or editing either README language, update the other language and
   keep cross-links working (Principle VII). After spec/requirements changes,
   decide and act on README impact before closing the change.
-- Prefer Conventional Commit messages on work merged to `main` so CI can apply
-  Principle VIII correctly (`feat`, `fix`, breaking markers as appropriate).
+- Prefer Conventional Commit messages on work merged to `main` for readable
+  history and release notes (they do **not** auto-bump or auto-release).
+- To ship: after the desired commit is on the remote (typically `main`), create
+  and push a tag `vX.Y.Z` (for example `git tag v0.1.0 && git push origin v0.1.0`).
 
 ## Governance
 
@@ -135,4 +134,4 @@ Complexity beyond a single WPF app + Win32 interop layer MUST be justified in
 the feature plan Complexity Tracking table.
 Product SemVer tags (`vX.Y.Z`) MUST NOT be conflated with constitution versions.
 
-**Version**: 1.2.0 | **Ratified**: 2026-09-27 | **Last Amended**: 2026-09-27
+**Version**: 1.3.0 | **Ratified**: 2026-09-27 | **Last Amended**: 2026-09-30
