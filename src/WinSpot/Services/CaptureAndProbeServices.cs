@@ -216,7 +216,7 @@ public sealed class HotkeyService : IHotkeyService
             return true;
         }
 
-        error = "全局热键注册失败（可能与其它程序冲突）。";
+        error = "全局热键注册失败（可能与其它程序冲突，或系统「用 PrtSc 打开截图」已占用）。";
         return false;
     }
 

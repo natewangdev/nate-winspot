@@ -234,3 +234,12 @@ Setup → Foundation → Bind → Pick → Marquee → Capture/Settings → Publ
 - [x] T044 Update capture settings group header and any F11 UI labels to F12 in `src/WinSpot/MainWindow.xaml` per FR-008 / US4 (contradicts)
 - [x] T045 Align Technology Constraints hotkey default F11 → F12 in `.specify/memory/constitution.md` per FR-008 / Constitution Technology Constraints (partial)
 - [x] T046 Sync F11 → F12 in `README.md` and `README.zh-CN.md` per FR-008 / Constitution VII (partial)
+
+---
+
+## Phase 12: Convergence (PrtSc hotkey)
+
+**Purpose**: Replace F12 (debugger-reserved; `RegisterHotKey` fails) with fixed PrtSc
+
+- [x] T047 Switch capture hotkey to PrtSc (`VK_SNAPSHOT`/`0x2C`) and update status/UI strings in `src/WinSpot/MainWindow.xaml(.cs)` per FR-008 (contradicts)
+- [x] T048 Update specs/plan/research/quickstart/data-model, constitution, and READMEs for PrtSc; note OS snipping conflict in edge cases per FR-008 (partial)

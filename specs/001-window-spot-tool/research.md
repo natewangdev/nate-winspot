@@ -28,9 +28,9 @@
 
 ## Decision 5: Hotkey
 
-- **Decision**: `RegisterHotKey` on the WPF main window HWND for `VK_F12`; unregister on exit. On failure, show non-fatal banner.
-- **Rationale**: Simple, no low-level hook required for a single hotkey.
-- **Alternatives considered**: WH_KEYBOARD_LL (more power, more complexity/AV noise).
+- **Decision**: `RegisterHotKey` on the WPF main window HWND for `VK_SNAPSHOT` (PrtSc / Print Screen); unregister on exit. On failure, show non-fatal banner. Do **not** use `VK_F12` — Windows reserves F12 for the debugger and registration fails.
+- **Rationale**: Simple, no low-level hook required for a single hotkey. PrtSc may still conflict if Windows Settings enables “Use the Print screen key to open screen snipping”.
+- **Alternatives considered**: `VK_F11` (works but user requested PrtSc); `VK_F12` (rejected — debugger-reserved); WH_KEYBOARD_LL (more power, more complexity/AV noise).
 
 ## Decision 6: Screenshot backend & settings (amended)
 

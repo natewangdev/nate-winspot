@@ -1,6 +1,6 @@
 <!--
 Sync Impact Report
-- Version change: 1.3.0 → 1.3.1 (PATCH: Technology Constraints hotkey default F11 → fixed F12)
+- Version change: 1.3.1 → 1.3.2 (PATCH: Technology Constraints capture hotkey F12 → fixed PrtSc)
 - Modified principles: Technology Constraints (capture hotkey wording)
 - Added: none
 - Removed: none
@@ -96,7 +96,7 @@ predictable artifacts that match what was tagged.
 - Stack MUST be C# and WPF on a current LTS .NET (8+).
 - Target platform MUST be Windows 10/11 x64.
 - Publish MUST produce a single-file, self-contained `win-x64` executable.
-- Global hotkeys (fixed F12 for client capture in v1) MUST degrade gracefully when
+- Global hotkeys (fixed PrtSc / Print Screen for client capture in v1) MUST degrade gracefully when
   registration fails (conflict messaging; no crash).
 - Settings (save directory, image format, JPEG quality, filename template) MUST
   persist under a per-user local config location.
@@ -134,4 +134,4 @@ Complexity beyond a single WPF app + Win32 interop layer MUST be justified in
 the feature plan Complexity Tracking table.
 Product SemVer tags (`vX.Y.Z`) MUST NOT be conflated with constitution versions.
 
-**Version**: 1.3.1 | **Ratified**: 2026-09-27 | **Last Amended**: 2026-09-30
+**Version**: 1.3.2 | **Ratified**: 2026-09-27 | **Last Amended**: 2026-09-30

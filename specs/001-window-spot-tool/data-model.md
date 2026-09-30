@@ -43,7 +43,7 @@
 | ImageFormat | enum PNG/JPEG/BMP | **JPEG** |
 | JpegQuality | int 1–100 | 90 |
 | FilenameTemplate | string | `{yyyyMMdd_HHmmss}` (time only; no title) |
-| Hotkey | display/fixed | F12 (v1; not persisted / not remappable in this version) |
+| Hotkey | display/fixed | PrtSc / Print Screen (`VK_SNAPSHOT`; v1; not persisted / not remappable) |
 
 ## CaptureResult
 
