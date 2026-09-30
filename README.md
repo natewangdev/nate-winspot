@@ -59,16 +59,25 @@ Hotkey: **F11** (global). Conflicts show a status message.
 
 ## Versioning & releases
 
-Product versioning follows the constitution (Principle VIII):
+This repo uses **tag-driven releases** (same approach as nate-game-engine): the
+git tag is the source of truth. **Merging to `main` does not publish.** Pushing
+a `v*` tag builds `WinSpot.exe`, creates a GitHub Release, and attaches the
+binary ([`.github/workflows/release.yml`](.github/workflows/release.yml)).
 
-1. **SemVer** — Git tags look like `vX.Y.Z` (e.g. `v0.1.0`).
-2. **CI on `main`** — After merge to `main`, [`.github/workflows/release.yml`](.github/workflows/release.yml) computes the next version from [Conventional Commits](https://www.conventionalcommits.org/) since the last stable product tag.
-3. **Skip empty releases** — No `feat` / `fix` / breaking change → no tag and no GitHub Release.
-4. **Artifacts** — Release attaches published `WinSpot.exe`; binary version MUST match the tag (`v1.2.3` ↔ `1.2.3`).
-5. **Pre-release** — Optional `vX.Y.Z-beta.N` is out of band; the default `main` workflow ships **stable** tags only.
+```powershell
+# After merge to main (or on the commit you want to ship):
+git tag v0.1.0
+git push origin v0.1.0
+```
 
-Use Conventional Commit messages on PRs merged to `main` (squash titles count). Examples: `feat: …`, `fix: …`, `feat!: …` or a body line `BREAKING CHANGE: …`.
+Rules (constitution Principle VIII):
 
+1. **SemVer tags** — `vX.Y.Z` (e.g. `v0.1.0`). Optional pre-release: `vX.Y.Z-beta.N`.
+2. **Tag → CI** — Only `v*` tag pushes run the release workflow.
+3. **Artifacts** — Release attaches published `WinSpot.exe`; binary version matches the tag (`v1.2.3` ↔ `1.2.3`).
+4. **Do not reuse** a tag / version that already exists as a GitHub Release.
+
+Prefer Conventional Commits on PRs for readable history and generated notes.
 Constitution version (governance doc) is separate from product SemVer.
 
 ## Spec Kit

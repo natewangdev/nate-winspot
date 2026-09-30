@@ -59,16 +59,23 @@ dotnet publish src\WinSpot\WinSpot.csproj -c Release -r win-x64 --self-contained
 
 ## 版本与发布
 
-产品版本遵循宪章原则 VIII：
+本仓库采用 **tag 驱动发版**（与 nate-game-engine 相同）：**git tag 即为版本号唯一来源**。
+**合并到 `main` 不会发布。** 推送 `v*` tag 后会构建 `WinSpot.exe`、创建 GitHub Release 并挂上产物（[`.github/workflows/release.yml`](.github/workflows/release.yml)）。
 
-1. **SemVer** — Git 标签形如 `vX.Y.Z`（例如 `v0.1.0`）。
-2. **main 上的 CI** — 合并到 `main` 后，由 [`.github/workflows/release.yml`](.github/workflows/release.yml) 根据自上一**正式**产品标签以来的 [Conventional Commits](https://www.conventionalcommits.org/) 计算下一版本。
-3. **无有效变更不发版** — 无 `feat` / `fix` / breaking 时不创建 tag，也不创建 GitHub Release。
-4. **产物** — Release 附件为发布得到的 `WinSpot.exe`；二进制内嵌版本须与 tag 一致（`v1.2.3` ↔ `1.2.3`）。
-5. **预发布** — `vX.Y.Z-beta.N` 不走默认流程；默认 `main` 工作流只发**正式版**。
+```powershell
+# 合并到 main（或选定要发布的 commit）之后：
+git tag v0.1.0
+git push origin v0.1.0
+```
 
-合并到 `main` 的提交（含 squash 标题）请使用 Conventional Commits，例如：`feat: …`、`fix: …`、`feat!: …`，或正文含 `BREAKING CHANGE: …`。
+规则（宪章原则 VIII）：
 
+1. **SemVer 标签** — `vX.Y.Z`（例如 `v0.1.0`）。可选预发布：`vX.Y.Z-beta.N`。
+2. **Tag → CI** — 仅推送 `v*` tag 会触发发版工作流。
+3. **产物** — Release 附件为 `WinSpot.exe`；二进制内嵌版本与 tag 一致（`v1.2.3` ↔ `1.2.3`）。
+4. **勿复用** 已存在的 GitHub Release / tag / 版本号。
+
+PR 建议使用 Conventional Commits，便于历史阅读与自动生成说明。
 宪章自身的版本号与产品 SemVer 相互独立，请勿混用。
 
 ## Spec Kit
