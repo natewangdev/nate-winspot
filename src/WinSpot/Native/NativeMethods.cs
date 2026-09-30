@@ -66,6 +66,20 @@ internal static class NativeMethods
     [DllImport("user32.dll")]
     public static extern bool UnregisterHotKey(nint hWnd, int id);
 
+    [DllImport("user32.dll")]
+    public static extern bool GetWindowRect(nint hWnd, out RECT lpRect);
+
+    [DllImport("user32.dll")]
+    public static extern int SetWindowRgn(nint hWnd, nint hRgn, bool bRedraw);
+
+    [DllImport("gdi32.dll")]
+    public static extern nint CreateRectRgn(int nLeftRect, int nTopRect, int nRightRect, int nBottomRect);
+
+    [DllImport("gdi32.dll")]
+    public static extern int CombineRgn(nint hrgnDest, nint hrgnSrc1, nint hrgnSrc2, int fnCombineMode);
+
+    public const int RGN_DIFF = 4;
+
     [StructLayout(LayoutKind.Sequential)]
     public struct POINT
     {

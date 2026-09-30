@@ -138,6 +138,41 @@
 
 ---
 
+## Phase 9: UX Polish (FR-013–016, Session 2026-09-30)
+
+**Purpose**: Apply clarified UX: no content banner, tabbed probe modes, copy feedback toast, “W” app icon
+
+**Independent Test**: quickstart.md steps 1–5 (chrome, bind copy toast, pick/marquee tabs, idle tab)
+
+### Implementation
+
+- [x] T034 [US1] Remove in-content “WinSpot” title/intro banner from `src/WinSpot/MainWindow.xaml`; keep `Window.Title="WinSpot"` (FR-016)
+- [x] T035 [US2] Replace probe-mode radio buttons with None/Pick/Marquee `TabControl` in `src/WinSpot/MainWindow.xaml(.cs)`; each tab shows only that mode’s results/hints (FR-013)
+- [x] T036 [P] [US1] Add copy success UX: brief button success state (~1.5s) + top toast `已复制` (~2s auto-dismiss) for all copy actions in `MainWindow.xaml(.cs)` (FR-014)
+- [x] T037 [P] [US5] Create abstract “W” letter `src/WinSpot/Assets/app.ico` and set `ApplicationIcon` in `src/WinSpot/WinSpot.csproj` (FR-015)
+- [x] T038 Verify build (`dotnet build`) and that published icon wiring is present; update quickstart if UI labels changed
+
+**Checkpoint**: Clarification UX complete — ready for manual quickstart re-run
+
+---
+
+## Phase 10: Probe Interaction (FR-017)
+
+**Purpose**: WinSpot stays interactive under the pointer during Pick/Marquee; mode crosshair outside; samples keep the active tab; Esc or None tab exits
+
+**Independent Test**: quickstart pick/marquee steps — operate WinSpot UI while mode active; sample twice without re-selecting tab; Esc → None
+
+### Implementation
+
+- [x] T039 [US2] Update `ProbeOverlayWindow` to exclude WinSpot from hit-testing (window region punch-out / click-through over owner) and use Cross cursor outside; keep Focus for Esc in `src/WinSpot/ProbeOverlayWindow.cs`
+- [x] T040 [US2] After successful pick/marquee, keep overlay armed and do **not** auto-select None; Esc raises cancel → None; selecting None closes overlay in `MainWindow.xaml.cs` (FR-017)
+- [x] T041 [US3] Ensure marquee rubber-band still works with exclusion region; stay on Marquee tab after release for repeat (FR-017)
+- [x] T042 Build + smoke: mode cursor outside, WinSpot clicks work, Esc/None exit
+
+**Checkpoint**: FR-017 probe interaction complete
+
+---
+
 ## Dependencies & Execution Order
 
 ### Phase Dependencies
@@ -145,17 +180,23 @@
 - **Setup (Phase 1)**: Start immediately
 - **Foundational (Phase 2)**: Depends on Setup — BLOCKS stories
 - **US1 → US5**: After Foundational; prefer priority order (US2–US4 need bound window from US1 in practice)
-- **Polish**: After desired stories
+- **Polish (Phase 8)**: After desired stories
+- **UX Polish (Phase 9)**: After US1–US3 UI exists; can run once MainWindow shell is present
+- **Probe Interaction (Phase 10)**: After Phase 9 tab UI (T035)
 
 ### User Story Dependencies
 
 - **US1**: After Phase 2 only
 - **US2 / US3 / US4**: After Phase 2; practically require US1 bind UX
 - **US5**: After core features compile; can parallelize publish config earlier (T002)
+- **Phase 9**: Depends on MainWindow bind/probe UI (T012–T022)
+- **Phase 10**: Depends on T035 overlay/tab wiring
 
 ### Parallel Opportunities
 
 - T003/T004; T005/T006/T007; T024/T025 after contracts stable
+- T036 / T037 can run in parallel after T034/T035 layout settles (T037 independent of T034/T035)
+- T039–T041 are sequential on the same overlay/main-window files
 
 ---
 
