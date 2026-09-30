@@ -6,7 +6,7 @@
 
 ## Summary
 
-Build **WinSpot**, a Windows desktop assistant that binds a target window via drag, displays identity/geometry, picks client-relative coordinates and pixel color, marquees client regions, and captures the client area via F11 with persistent export settings. Implementation uses **C# / WPF on .NET 8**, Win32 interop for geometry/pixel/capture, and **single-file self-contained `win-x64` publish**.
+Build **WinSpot**, a Windows desktop assistant that binds a target window via drag, displays identity/geometry, picks client-relative coordinates and pixel color, marquees client regions, and captures the client area via F12 with persistent export settings. Implementation uses **C# / WPF on .NET 8**, Win32 interop for geometry/pixel/capture, and **single-file self-contained `win-x64` publish**.
 
 **UX polish (2026-09-30 clarifications)**: No in-content title/intro banner (OS title stays `WinSpot`); probe modes as None/Pick/Marquee tabs with per-tab results; copy actions show brief button success + top `已复制` toast; app icon is an abstract “W” letter mark on exe/window/taskbar. **Probe interaction (FR-017)**: while Pick/Marquee is selected, WinSpot under the pointer stays normal (cursor + clicks); outside WinSpot use mode crosshair and sample; completing a sample keeps the tab; Esc or selecting None exits.
 
@@ -24,7 +24,7 @@ Build **WinSpot**, a Windows desktop assistant that binds a target window via dr
 
 **Project Type**: Desktop WPF application (single solution)
 
-**Performance Goals**: UI remains responsive during bind hover; F11 client capture completes under ~2s for typical window sizes; pick/marquee feedback feels immediate (<100ms perception)
+**Performance Goals**: UI remains responsive during bind hover; F12 client capture completes under ~2s for typical window sizes; pick/marquee feedback feels immediate (<100ms perception)
 
 **Constraints**: No process injection; single bound window; global hotkey with conflict handling; accurate DPI/client transforms; single-file publish
 

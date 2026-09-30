@@ -11,7 +11,7 @@ English is the primary documentation language. Spec-Driven Development via [GitH
 - Drag-bind a window and inspect HWND, title, class, process, client size
 - Pick client-relative coordinates and pixel color (copyable)
 - Marquee a client region (copyable `x1,y1,x2,y2`) with visible rubber-band
-- F11 client-area screenshot via DXGI Desktop Duplication (dxcam-equivalent)
+- F12 client-area screenshot via DXGI Desktop Duplication (dxcam-equivalent)
 - Single-file self-contained `win-x64` publish
 
 ## Tech stack
@@ -55,7 +55,7 @@ Settings persist at `%AppData%\WinSpot\settings.json`:
 | `jpegQuality` | 1–100 | `90` |
 | `filenameTemplate` | Tokens `{yyyyMMdd_HHmmss}`, `{yyyyMMdd}`, `{HHmmss}` (optional `{title}`) | `{yyyyMMdd_HHmmss}` |
 
-Hotkey: **F11** (global). Conflicts show a status message.
+Hotkey: **F12** (global, fixed in v1). Conflicts show a status message.
 
 ## Versioning & releases
 

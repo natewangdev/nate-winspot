@@ -28,7 +28,7 @@
 
 ## Decision 5: Hotkey
 
-- **Decision**: `RegisterHotKey` on the WPF main window HWND for `VK_F11`; unregister on exit. On failure, show non-fatal banner.
+- **Decision**: `RegisterHotKey` on the WPF main window HWND for `VK_F12`; unregister on exit. On failure, show non-fatal banner.
 - **Rationale**: Simple, no low-level hook required for a single hotkey.
 - **Alternatives considered**: WH_KEYBOARD_LL (more power, more complexity/AV noise).
 

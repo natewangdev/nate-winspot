@@ -14,7 +14,7 @@ namespace WinSpot;
 public partial class MainWindow : Window
 {
     private const int HotkeyId = 0x11;
-    private const uint VkF11 = 0x7A;
+    private const uint VkF12 = 0x7B;
     private static readonly TimeSpan CopyButtonSuccessDuration = TimeSpan.FromMilliseconds(1500);
     private static readonly TimeSpan CopyToastDuration = TimeSpan.FromSeconds(2);
 
@@ -48,13 +48,13 @@ public partial class MainWindow : Window
         _hwndSource = HwndSource.FromHwnd(helper.Handle);
         _hwndSource?.AddHook(WndProc);
 
-        if (!_hotkeyService.TryRegister(helper.Handle, HotkeyId, 0, VkF11, out var error))
+        if (!_hotkeyService.TryRegister(helper.Handle, HotkeyId, 0, VkF12, out var error))
         {
-            SetStatus(error ?? "F11 热键注册失败。");
+            SetStatus(error ?? "F12 热键注册失败。");
         }
         else
         {
-            SetStatus("就绪。拖动准星绑定窗口；F11 截取客户区。");
+            SetStatus("就绪。拖动准星绑定窗口；F12 截取客户区。");
         }
     }
 
