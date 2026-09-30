@@ -1,3 +1,0 @@
-fix: use PrtSc for capture hotkey instead of F12
-
-F12 is reserved by the Windows debugger so RegisterHotKey fails; switch to VK_SNAPSHOT and sync specs/docs.
