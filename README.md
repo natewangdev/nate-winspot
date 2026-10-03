@@ -2,15 +2,17 @@
 
 [中文](README.zh-CN.md)
 
-Windows desktop tool for window binding, client-area coordinate/color pickup, region marquee, and hotkey client capture.
+Windows desktop tool for window binding, client-area coordinate/color pickup, region marquee, range (distance/angle from client center), and hotkey client capture.
 
 English is the primary documentation language. Spec-Driven Development via [GitHub Spec Kit](https://github.com/github/spec-kit). Feature requirements also provide a Chinese viewing copy (`spec.zh-CN.md`) that does not feed Spec Kit.
 
 ## Features
 
 - Drag-bind a window and inspect HWND, title, class, process, client size
-- Pick client-relative coordinates and pixel color (copyable)
+- Pick client-relative coordinates and pixel color (copyable; stays in Pick after copy)
 - Marquee a client region (copyable `x1,y1,x2,y2`) with visible rubber-band
+- Probe cursor and sampling apply only over the bound window’s client area; other windows keep a normal cursor and receive clicks
+- Range: live distance/angle from client center (0° up, clockwise positive); up to 10 click-recorded slots with copy and clear
 - PrtSc client-area screenshot via DXGI Desktop Duplication (dxcam-equivalent)
 - Single-file self-contained `win-x64` publish
 

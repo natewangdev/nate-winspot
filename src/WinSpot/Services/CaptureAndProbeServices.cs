@@ -49,6 +49,34 @@ public sealed class ClientProbeService : IClientProbeService
         return true;
     }
 
+    public bool TryMeasureRange(nint hwnd, Point screenPoint, out ClientRangeSample? sample)
+    {
+        sample = null;
+        if (hwnd == nint.Zero || !NativeMethods.IsWindow(hwnd))
+        {
+            return false;
+        }
+
+        var pt = new NativeMethods.POINT { X = (int)screenPoint.X, Y = (int)screenPoint.Y };
+        if (!NativeMethods.ScreenToClient(hwnd, ref pt))
+        {
+            return false;
+        }
+
+        if (!NativeMethods.GetClientRect(hwnd, out var client))
+        {
+            return false;
+        }
+
+        if (pt.X < 0 || pt.Y < 0 || pt.X >= client.Width || pt.Y >= client.Height)
+        {
+            return false;
+        }
+
+        sample = RangeMeasurement.Measure(pt.X, pt.Y, client.Width, client.Height);
+        return true;
+    }
+
     public ClientRegion ClipRegionToClient(nint hwnd, ClientRegion raw)
     {
         if (!NativeMethods.GetClientRect(hwnd, out var client))

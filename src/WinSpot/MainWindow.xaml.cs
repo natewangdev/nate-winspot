@@ -33,10 +33,17 @@ public partial class MainWindow : Window
     private ProbeOverlayWindow? _overlay;
     private DispatcherTimer? _copyToastTimer;
     private readonly Dictionary<Button, DispatcherTimer> _copyButtonTimers = new();
+    private const int RangeSlotCount = 10;
+    private const string RangeFullToast = "测距已满（10/10）";
+
+    private readonly TextBox[] _rangeDist = new TextBox[RangeSlotCount];
+    private readonly TextBox[] _rangeAng = new TextBox[RangeSlotCount];
+    private int _rangeFilled;
 
     public MainWindow()
     {
         InitializeComponent();
+        BuildRangeSlots();
         _settings = _settingsService.Load();
         LoadSettingsIntoUi();
     }
@@ -155,6 +162,12 @@ public partial class MainWindow : Window
     {
         _bound = null;
         ApplyBoundToUi(null);
+        CloseOverlay();
+        if (ProbeModeTabs.SelectedItem != TabNone)
+        {
+            SelectNoneTabQuietly();
+        }
+
         SetStatus("已清除绑定。");
     }
 
@@ -211,13 +224,18 @@ public partial class MainWindow : Window
 
         if (ProbeModeTabs.SelectedItem == TabPick)
         {
-            OpenOverlay(marquee: false);
-            SetStatus("拾取模式：在 WinSpot 外点击绑定窗口客户区；Esc 或「无」结束。");
+            OpenOverlay(ProbeOverlayKind.Pick);
+            SetStatus("拾取：仅绑定客户区内拾取；复制后仍留在本页。Esc /「无」结束。");
         }
         else if (ProbeModeTabs.SelectedItem == TabMarquee)
         {
-            OpenOverlay(marquee: true);
-            SetStatus("框选模式：在 WinSpot 外拖拽客户区；Esc 或「无」结束。");
+            OpenOverlay(ProbeOverlayKind.Marquee);
+            SetStatus("框选：仅绑定客户区内拖拽；复制后仍留在本页。Esc /「无」结束。");
+        }
+        else if (ProbeModeTabs.SelectedItem == TabRange)
+        {
+            OpenOverlay(ProbeOverlayKind.Range);
+            SetStatus("测距：悬停实时值，点击写入下一空槽（最多 10）。Esc /「无」结束。");
         }
     }
 
@@ -228,13 +246,18 @@ public partial class MainWindow : Window
         _suppressModeChange = false;
     }
 
-    private void OpenOverlay(bool marquee)
+    private void OpenOverlay(ProbeOverlayKind kind)
     {
         CloseOverlay();
-        _overlay = new ProbeOverlayWindow(marquee, this);
-        if (marquee)
+        _overlay = new ProbeOverlayWindow(kind, this, GetBoundHwnd);
+        if (kind == ProbeOverlayKind.Marquee)
         {
             _overlay.RegionSelected += OnRegionSelected;
+        }
+        else if (kind == ProbeOverlayKind.Range)
+        {
+            _overlay.PointerMoved += OnRangePointerMoved;
+            _overlay.PointPicked += OnRangeCommitted;
         }
         else
         {
@@ -246,8 +269,11 @@ public partial class MainWindow : Window
         _overlay.Show();
         _overlay.Activate();
         _overlay.Focus();
-        _overlay.UpdateOwnerExclusionRegion();
+        _overlay.UpdateHitRegion();
     }
+
+    private nint GetBoundHwnd() =>
+        _bound is { IsValid: true } ? _bound.Handle : nint.Zero;
 
     private void CloseOverlay()
     {
@@ -306,6 +332,108 @@ public partial class MainWindow : Window
 
         RegionText.Text = clipped.CopyText;
         SetStatus($"已框选 {clipped.CopyText}");
+    }
+
+    private void OnRangePointerMoved(Point screen)
+    {
+        if (_bound is null)
+        {
+            return;
+        }
+
+        if (_probeService.TryMeasureRange(_bound.Handle, screen, out var sample) && sample is not null)
+        {
+            RangeLiveDistanceText.Text = sample.DistanceText;
+            RangeLiveAngleText.Text = sample.AngleText;
+        }
+        else
+        {
+            RangeLiveDistanceText.Text = "";
+            RangeLiveAngleText.Text = "";
+        }
+    }
+
+    private void OnRangeCommitted(Point screen)
+    {
+        if (_bound is null)
+        {
+            return;
+        }
+
+        if (_rangeFilled >= RangeSlotCount)
+        {
+            ShowToast(RangeFullToast);
+            SetStatus(RangeFullToast);
+            return;
+        }
+
+        if (_probeService.TryMeasureRange(_bound.Handle, screen, out var sample) && sample is not null)
+        {
+            _rangeDist[_rangeFilled].Text = sample.DistanceText;
+            _rangeAng[_rangeFilled].Text = sample.AngleText;
+            _rangeFilled++;
+            SetStatus($"已测距 {_rangeFilled}/{RangeSlotCount}：{sample.DistanceText} px，{sample.AngleText}°");
+        }
+        else
+        {
+            SetStatus("点击不在绑定窗口客户区内，或测距失败。");
+        }
+    }
+
+    private void BuildRangeSlots()
+    {
+        RangeSlotsHost.Children.Clear();
+        for (var i = 0; i < RangeSlotCount; i++)
+        {
+            var row = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 2, 0, 2) };
+            row.Children.Add(new TextBlock
+            {
+                Text = $"{i + 1}.",
+                Width = 22,
+                VerticalAlignment = VerticalAlignment.Center
+            });
+            var dist = new TextBox { Width = 72, IsReadOnly = true };
+            var copyDist = new Button { Content = "复制距离", Margin = new Thickness(4, 0, 0, 0), Tag = i, Padding = new Thickness(6, 1, 6, 1) };
+            copyDist.Click += CopyRangeSlotDistance_Click;
+            var ang = new TextBox { Width = 64, IsReadOnly = true, Margin = new Thickness(10, 0, 0, 0) };
+            var copyAng = new Button { Content = "复制夹角", Margin = new Thickness(4, 0, 0, 0), Tag = i, Padding = new Thickness(6, 1, 6, 1) };
+            copyAng.Click += CopyRangeSlotAngle_Click;
+            _rangeDist[i] = dist;
+            _rangeAng[i] = ang;
+            row.Children.Add(dist);
+            row.Children.Add(copyDist);
+            row.Children.Add(ang);
+            row.Children.Add(copyAng);
+            RangeSlotsHost.Children.Add(row);
+        }
+    }
+
+    private void ClearRangeSlots_Click(object sender, RoutedEventArgs e)
+    {
+        for (var i = 0; i < RangeSlotCount; i++)
+        {
+            _rangeDist[i].Text = "";
+            _rangeAng[i].Text = "";
+        }
+
+        _rangeFilled = 0;
+        SetStatus("测距槽位已清空。");
+    }
+
+    private void CopyRangeSlotDistance_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button { Tag: int i })
+        {
+            CopyText(sender, _rangeDist[i].Text);
+        }
+    }
+
+    private void CopyRangeSlotAngle_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button { Tag: int i })
+        {
+            CopyText(sender, _rangeAng[i].Text);
+        }
     }
 
     private void LoadSettingsIntoUi()
@@ -446,7 +574,7 @@ public partial class MainWindow : Window
             FlashCopyButton(button);
         }
 
-        ShowCopyToast();
+        ShowToast("已复制");
     }
 
     private void FlashCopyButton(Button button)
@@ -470,8 +598,9 @@ public partial class MainWindow : Window
         timer.Start();
     }
 
-    private void ShowCopyToast()
+    private void ShowToast(string message)
     {
+        ToastText.Text = message;
         CopyToast.Visibility = Visibility.Visible;
         _copyToastTimer?.Stop();
         _copyToastTimer = new DispatcherTimer { Interval = CopyToastDuration };
