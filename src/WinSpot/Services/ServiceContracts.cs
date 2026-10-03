@@ -13,6 +13,7 @@ public interface IWindowBindService
 public interface IClientProbeService
 {
     bool TrySamplePoint(nint hwnd, Point screenPoint, out ClientPointSample? sample);
+    bool TryMeasureRange(nint hwnd, Point screenPoint, out ClientRangeSample? sample);
     ClientRegion ClipRegionToClient(nint hwnd, ClientRegion raw);
 }
 

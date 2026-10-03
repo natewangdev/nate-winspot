@@ -2,7 +2,7 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="WinSpot"
-        Height="640" Width="520"
+        Height="800" Width="540"
         MinHeight="480" MinWidth="420"
         Background="#F3F5F7"
         Loaded="Window_Loaded"
@@ -73,7 +73,7 @@
             <TabControl x:Name="ProbeModeTabs" SelectionChanged="ProbeModeTabs_SelectionChanged">
               <TabItem x:Name="TabNone" Header="无">
                 <TextBlock Margin="0,10,0,0" Foreground="#607D8B" TextWrapping="Wrap"
-                           Text="未启用探测。选择「拾取」或「框选」后，在绑定窗口客户区内操作。"/>
+                           Text="未启用探测。选择「拾取」「框选」或「测距」后，仅在绑定窗口客户区内采样；其它窗口保持正常点击。"/>
               </TabItem>
               <TabItem x:Name="TabPick" Header="拾取">
                 <StackPanel Margin="0,10,0,0">
@@ -85,7 +85,7 @@
                     <Button Content="复制颜色" Margin="6,0,0,0" Click="CopyPickColor_Click"/>
                   </StackPanel>
                   <TextBlock Margin="0,8,0,0" Foreground="#607D8B" TextWrapping="Wrap"
-                             Text="提示：在 WinSpot 外点击绑定窗口客户区拾取；窗口内仍可正常操作。Esc 或「无」结束。"/>
+                             Text="提示：仅在绑定窗口客户区内为探测光标并可拾取；其它处正常点击。Esc 或「无」结束。复制后仍留在本页。"/>
                 </StackPanel>
               </TabItem>
               <TabItem x:Name="TabMarquee" Header="框选">
@@ -96,7 +96,23 @@
                     <Button Content="复制区域" Margin="6,0,0,0" Click="CopyRegion_Click"/>
                   </StackPanel>
                   <TextBlock Margin="0,8,0,0" Foreground="#607D8B" TextWrapping="Wrap"
-                             Text="提示：在 WinSpot 外拖拽框选；拖拽中显示绿色边框。结果格式 x1,y1,x2,y2。Esc 或「无」结束。"/>
+                             Text="提示：仅在绑定客户区内拖拽框选。结果格式 x1,y1,x2,y2。复制后仍留在本页。Esc 或「无」结束。"/>
+                </StackPanel>
+              </TabItem>
+              <TabItem x:Name="TabRange" Header="测距">
+                <StackPanel Margin="0,10,0,0">
+                  <TextBlock Margin="0,0,0,4" Text="实时（悬停绑定客户区）"/>
+                  <StackPanel Orientation="Horizontal">
+                    <TextBlock VerticalAlignment="Center" Text="距离" Width="36"/>
+                    <TextBox x:Name="RangeLiveDistanceText" Width="80" IsReadOnly="True"/>
+                    <TextBlock VerticalAlignment="Center" Text="夹角°" Margin="12,0,0,0" Width="40"/>
+                    <TextBox x:Name="RangeLiveAngleText" Width="80" IsReadOnly="True"/>
+                    <Button Content="清空槽位" Margin="16,0,0,0" Padding="8,2" Click="ClearRangeSlots_Click"/>
+                  </StackPanel>
+                  <TextBlock Margin="0,10,0,4" Text="已记录（最多 10 组，只读）"/>
+                  <StackPanel x:Name="RangeSlotsHost"/>
+                  <TextBlock Margin="0,8,0,0" Foreground="#607D8B" TextWrapping="Wrap"
+                             Text="提示：0° 正上、顺时针为正。点击写入下一空槽；满 10 组后弹出「测距已满（10/10）」。Esc 或「无」结束。"/>
                 </StackPanel>
               </TabItem>
             </TabControl>
@@ -146,7 +162,8 @@
             Visibility="Collapsed"
             IsHitTestVisible="False"
             Panel.ZIndex="100">
-      <TextBlock Text="已复制"
+      <TextBlock x:Name="ToastText"
+                 Text="已复制"
                  Foreground="White"
                  FontWeight="SemiBold"
                  HorizontalAlignment="Center"/>
